@@ -8,12 +8,16 @@ use Symfony\Component\Routing\Attribute\Route;
 
 final class UserController extends AbstractController
 {
-    #[Route('/user', name: 'app_user')]
-    public function index(): JsonResponse
+    #[Route('/api/me', name: 'api_me', methods: ['GET'])]
+    public function me(): JsonResponse
     {
+        /** @var \App\Entity\User $user */
+        $user = $this->getUser();
+
         return $this->json([
-            'message' => 'Welcome to your new controller!',
-            'path' => 'src/Controller/UserController.php',
+            'email'     => $user->getEmail(),
+            'firstName' => $user->getFirstName(),
+            'lastName'  => $user->getLastName(),
         ]);
     }
 }
