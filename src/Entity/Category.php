@@ -6,6 +6,7 @@ use App\Repository\CategoryRepository;
 use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\Common\Collections\Collection;
 use Doctrine\ORM\Mapping as ORM;
+use Symfony\Component\Serializer\Attribute\Groups;
 use Symfony\Component\Serializer\Attribute\Ignore;
 
 #[ORM\Entity(repositoryClass: CategoryRepository::class)]
@@ -15,12 +16,15 @@ class Category
     #[ORM\Id]
     #[ORM\GeneratedValue]
     #[ORM\Column]
+    #[Groups(['product:list', 'product:show'])]
     private ?int $id = null;
 
     #[ORM\Column(length: 100, unique: true)]
+    #[Groups(['product:list', 'product:show'])]
     private string $name;
 
     #[ORM\Column(length: 120, unique: true)]
+    #[Groups(['product:list', 'product:show'])]
     private string $slug;
 
     #[ORM\Column(length: 255, nullable: true)]
@@ -36,6 +40,11 @@ class Category
     public function __construct()
     {
         $this->products = new ArrayCollection();
+    }
+
+    public function __toString(): string
+    {
+        return $this->name;
     }
 
     public function getId(): ?int

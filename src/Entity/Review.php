@@ -5,6 +5,8 @@ namespace App\Entity;
 use App\Repository\ReviewRepository;
 use Doctrine\DBAL\Types\Types;
 use Doctrine\ORM\Mapping as ORM;
+use Symfony\Component\Serializer\Attribute\Groups;
+use Symfony\Component\Serializer\Attribute\Ignore;
 
 #[ORM\Entity(repositoryClass: ReviewRepository::class)]
 #[ORM\Table(name: 'reviews')]
@@ -18,19 +20,24 @@ class Review
 
     #[ORM\ManyToOne(targetEntity: User::class, inversedBy: 'reviews')]
     #[ORM\JoinColumn(nullable: false, onDelete: 'CASCADE')]
+    #[Groups(['product:show'])]
     private User $user;
 
+    #[Ignore]
     #[ORM\ManyToOne(targetEntity: Product::class, inversedBy: 'reviews')]
     #[ORM\JoinColumn(nullable: false, onDelete: 'CASCADE')]
     private Product $product;
 
     #[ORM\Column(type: Types::SMALLINT)]
+    #[Groups(['product:show'])]
     private int $rating;
 
     #[ORM\Column(type: Types::TEXT, nullable: true)]
+    #[Groups(['product:show'])]
     private ?string $comment = null;
 
     #[ORM\Column(type: Types::DATETIME_IMMUTABLE)]
+    #[Groups(['product:show'])]
     private \DateTimeImmutable $createdAt;
 
     public function __construct()

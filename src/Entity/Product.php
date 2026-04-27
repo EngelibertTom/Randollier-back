@@ -7,6 +7,7 @@ use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\Common\Collections\Collection;
 use Doctrine\DBAL\Types\Types;
 use Doctrine\ORM\Mapping as ORM;
+use Symfony\Component\Serializer\Attribute\Groups;
 use Symfony\Component\Serializer\Attribute\Ignore;
 
 #[ORM\Entity(repositoryClass: ProductRepository::class)]
@@ -16,27 +17,35 @@ class Product
     #[ORM\Id]
     #[ORM\GeneratedValue]
     #[ORM\Column]
+    #[Groups(['product:list', 'product:show'])]
     private ?int $id = null;
 
     #[ORM\Column(length: 255)]
+    #[Groups(['product:list', 'product:show'])]
     private string $name;
 
     #[ORM\Column(length: 255, unique: true)]
+    #[Groups(['product:list', 'product:show'])]
     private string $slug;
 
     #[ORM\Column(type: Types::TEXT, nullable: true)]
+    #[Groups(['product:show'])]
     private ?string $description = null;
 
     #[ORM\Column(type: Types::DECIMAL, precision: 10, scale: 2)]
+    #[Groups(['product:list', 'product:show'])]
     private string $price;
 
     #[ORM\Column(options: ['default' => 0])]
+    #[Groups(['product:show'])]
     private int $stock = 0;
 
     #[ORM\Column(length: 255, nullable: true)]
+    #[Groups(['product:list', 'product:show'])]
     private ?string $image = null;
 
     #[ORM\Column(options: ['default' => true])]
+    #[Groups(['product:show'])]
     private bool $isActive = true;
 
     #[ORM\Column(type: Types::DATETIME_IMMUTABLE)]
@@ -44,10 +53,11 @@ class Product
 
     #[ORM\ManyToOne(targetEntity: Category::class, inversedBy: 'products')]
     #[ORM\JoinColumn(nullable: false)]
+    #[Groups(['product:list', 'product:show'])]
     private Category $category;
 
-    #[Ignore]
     #[ORM\OneToMany(targetEntity: Review::class, mappedBy: 'product', cascade: ['remove'], orphanRemoval: true)]
+    #[Groups(['product:show'])]
     private Collection $reviews;
 
     public function __construct()
