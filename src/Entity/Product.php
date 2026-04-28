@@ -48,6 +48,9 @@ class Product
     #[Groups(['product:show'])]
     private bool $isActive = true;
 
+    #[ORM\Column(options: ['default' => false])]
+    private bool $isFeatured = false;
+
     #[ORM\Column(type: Types::DATETIME_IMMUTABLE)]
     private \DateTimeImmutable $createdAt;
 
@@ -175,5 +178,17 @@ class Product
     public function getReviews(): Collection
     {
         return $this->reviews;
+    }
+
+    public function isFeatured(): bool
+    {
+        return $this->isFeatured;
+    }
+
+    public function setIsFeatured(bool $isFeatured): static
+    {
+        $this->isFeatured = $isFeatured;
+
+        return $this;
     }
 }

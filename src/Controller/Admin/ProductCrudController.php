@@ -33,6 +33,7 @@ class ProductCrudController extends AbstractCrudController
             NumberField::new('stock', 'Stock'),
             TextField::new('image', 'Image (URL)')->hideOnIndex(),
             BooleanField::new('isActive', 'Actif'),
+            BooleanField::new('isFeatured', 'En vedette'),
             AssociationField::new('category', 'Catégorie'),
             DateTimeField::new('createdAt', 'Créé le')->hideOnForm(),
         ];
