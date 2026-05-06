@@ -9,6 +9,8 @@ use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\Routing\Attribute\Route;
+use Symfony\Component\Serializer\SerializerInterface;
+use Symfony\Component\Validator\Validator\ValidatorInterface;
 
 #[Route('/api/addresses')]
 final class AddressController extends AbstractController
@@ -16,25 +18,52 @@ final class AddressController extends AbstractController
     #[Route('', name: 'api_addresses_list', methods: ['GET'])]
     public function list(AddressRepository $repo): JsonResponse
     {
-        /** @var \App\Entity\User $user */
         $user = $this->getUser();
 
-        return $this->json(array_map(
-            fn($addr) => $this->serialize($addr),
-            $repo->findByUser($user)
-        ));
+        $addresses = $repo->findBy(['user' => $user]);
+
+        return $this->json($addresses, 200, [], [
+            'groups' => ['address:read']
+        ]);
     }
 
     #[Route('', name: 'api_addresses_create', methods: ['POST'])]
-    public function create(Request $request, EntityManagerInterface $em): JsonResponse
-    {
-        /** @var \App\Entity\User $user */
+    public function create(Request $request, EntityManagerInterface $em, SerializerInterface $serializer, ValidatorInterface $validator): JsonResponse {
         $user = $this->getUser();
-        $data = json_decode($request->getContent(), true);
 
-        $address = new Address();
+        try {
+            /** @var Address $address */
+            $address = $serializer->deserialize(
+                $request->getContent(),
+                Address::class,
+                'json',
+                [
+                    'object_to_populate' => new Address(),
+                    'groups' => ['address:write']
+                ]
+            );
+        } catch (\Throwable $e) {
+            return $this->json([
+                'message' => 'JSON invalide'
+            ], 400);
+        }
+
         $address->setUser($user);
-        $this->hydrate($address, $data);
+
+        $errors = $validator->validate($address);
+
+        if (count($errors) > 0) {
+            $messages = [];
+
+            foreach ($errors as $error) {
+                $messages[] = $error->getPropertyPath() . ': ' . $error->getMessage();
+            }
+
+            return $this->json([
+                'message' => 'Données invalides',
+                'errors' => $messages
+            ], 400);
+        }
 
         if ($address->isDefault()) {
             foreach ($user->getAddresses() as $existing) {
@@ -45,22 +74,33 @@ final class AddressController extends AbstractController
         $em->persist($address);
         $em->flush();
 
-        return $this->json($this->serialize($address), 201);
+        return $this->json($address, 201, [], [
+            'groups' => ['address:read']
+        ]);
     }
 
     #[Route('/{id}', name: 'api_addresses_update', methods: ['PUT'])]
-    public function update(int $id, Request $request, AddressRepository $repo, EntityManagerInterface $em): JsonResponse
-    {
-        /** @var \App\Entity\User $user */
-        $user    = $this->getUser();
-        $address = $repo->find($id);
+    public function update(int $id, Request $request, AddressRepository $repo, EntityManagerInterface $em, SerializerInterface $serializer): JsonResponse {
+        $user = $this->getUser();
 
-        if (!$address || $address->getUser() !== $user) {
+        $address = $repo->findOneBy([
+            'id' => $id,
+            'user' => $user
+        ]);
+
+        if (!$address) {
             return $this->json(['message' => 'Adresse introuvable.'], 404);
         }
 
-        $data = json_decode($request->getContent(), true);
-        $this->hydrate($address, $data);
+        $serializer->deserialize(
+            $request->getContent(),
+            Address::class,
+            'json',
+            [
+                'object_to_populate' => $address,
+                'groups' => ['address:write']
+            ]
+        );
 
         if ($address->isDefault()) {
             foreach ($user->getAddresses() as $existing) {
@@ -72,17 +112,21 @@ final class AddressController extends AbstractController
 
         $em->flush();
 
-        return $this->json($this->serialize($address));
+        return $this->json($address, 200, [], [
+            'groups' => ['address:read']
+        ]);
     }
 
     #[Route('/{id}', name: 'api_addresses_delete', methods: ['DELETE'])]
-    public function delete(int $id, AddressRepository $repo, EntityManagerInterface $em): JsonResponse
-    {
-        /** @var \App\Entity\User $user */
-        $user    = $this->getUser();
-        $address = $repo->find($id);
+    public function delete(int $id, AddressRepository $repo, EntityManagerInterface $em): JsonResponse {
+        $user = $this->getUser();
 
-        if (!$address || $address->getUser() !== $user) {
+        $address = $repo->findOneBy([
+            'id' => $id,
+            'user' => $user
+        ]);
+
+        if (!$address) {
             return $this->json(['message' => 'Adresse introuvable.'], 404);
         }
 
@@ -90,32 +134,5 @@ final class AddressController extends AbstractController
         $em->flush();
 
         return $this->json(null, 204);
-    }
-
-    private function hydrate(Address $address, array $data): void
-    {
-        $address->setLabel($data['label'] ?? null);
-        $address->setFirstName($data['firstName'] ?? '');
-        $address->setLastName($data['lastName'] ?? '');
-        $address->setStreet($data['street'] ?? '');
-        $address->setCity($data['city'] ?? '');
-        $address->setPostalCode($data['postalCode'] ?? '');
-        $address->setCountry($data['country'] ?? '');
-        $address->setIsDefault($data['isDefault'] ?? false);
-    }
-
-    private function serialize(Address $addr): array
-    {
-        return [
-            'id'         => $addr->getId(),
-            'label'      => $addr->getLabel() ?? '',
-            'firstName'  => $addr->getFirstName(),
-            'lastName'   => $addr->getLastName(),
-            'street'     => $addr->getStreet(),
-            'city'       => $addr->getCity(),
-            'postalCode' => $addr->getPostalCode(),
-            'country'    => $addr->getCountry(),
-            'isDefault'  => $addr->isDefault(),
-        ];
     }
 }

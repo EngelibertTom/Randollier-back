@@ -4,6 +4,8 @@ namespace App\Entity;
 
 use App\Repository\AddressRepository;
 use Doctrine\ORM\Mapping as ORM;
+use Symfony\Component\Serializer\Attribute\Groups;
+use Symfony\Component\Validator\Constraints as Assert;
 
 #[ORM\Entity(repositoryClass: AddressRepository::class)]
 #[ORM\Table(name: 'addresses')]
@@ -12,6 +14,7 @@ class Address
     #[ORM\Id]
     #[ORM\GeneratedValue]
     #[ORM\Column]
+    #[Groups(['address:read'])]
     private ?int $id = null;
 
     #[ORM\ManyToOne(targetEntity: User::class, inversedBy: 'addresses')]
@@ -19,27 +22,41 @@ class Address
     private User $user;
 
     #[ORM\Column(length: 100, nullable: true)]
+    #[Groups(['address:read', 'address:write'])]
     private ?string $label = null;
 
     #[ORM\Column(length: 100)]
+    #[Groups(['address:read', 'address:write'])]
+    #[Assert\NotBlank]
     private string $firstName;
 
     #[ORM\Column(length: 100)]
+    #[Groups(['address:read', 'address:write'])]
+    #[Assert\NotBlank]
     private string $lastName;
 
     #[ORM\Column(length: 255)]
+    #[Groups(['address:read', 'address:write'])]
+    #[Assert\NotBlank]
     private string $street;
 
     #[ORM\Column(length: 100)]
+    #[Groups(['address:read', 'address:write'])]
+    #[Assert\NotBlank]
     private string $city;
 
     #[ORM\Column(length: 20)]
+    #[Groups(['address:read', 'address:write'])]
+    #[Assert\NotBlank]
     private string $postalCode;
 
     #[ORM\Column(length: 100)]
+    #[Groups(['address:read', 'address:write'])]
+    #[Assert\NotBlank]
     private string $country;
 
     #[ORM\Column(options: ['default' => false])]
+    #[Groups(['address:read', 'address:write'])]
     private bool $isDefault = false;
 
     public function getId(): ?int
