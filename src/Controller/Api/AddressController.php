@@ -10,6 +10,7 @@ use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\Routing\Attribute\Route;
 use Symfony\Component\Serializer\SerializerInterface;
+use Symfony\Bridge\Doctrine\Attribute\MapEntity;
 use Symfony\Component\Validator\Validator\ValidatorInterface;
 
 #[Route('/api/addresses')]
@@ -79,14 +80,19 @@ final class AddressController extends AbstractController
         ]);
     }
 
-    #[Route('/{id}', name: 'api_addresses_update', methods: ['PUT'])]
-    public function update(int $id, Request $request, AddressRepository $repo, EntityManagerInterface $em, SerializerInterface $serializer): JsonResponse {
+    #[Route('/{addresse_id}', name: 'api_addresses_update', methods: ['PUT'])]
+    public function update(
+        #[MapEntity(id:'addresse_id')] Address $address, 
+        Request $request, 
+        AddressRepository $repo, 
+        EntityManagerInterface $em, 
+        SerializerInterface $serializer): JsonResponse {
+       
         $user = $this->getUser();
 
-        $address = $repo->findOneBy([
-            'id' => $id,
-            'user' => $user
-        ]);
+        if ($address->getUser() !== $this->getUser()) {
+            return $this->json(['message' => 'Accès interdit.'], 403);
+        }
 
         if (!$address) {
             return $this->json(['message' => 'Adresse introuvable.'], 404);
@@ -117,14 +123,17 @@ final class AddressController extends AbstractController
         ]);
     }
 
-    #[Route('/{id}', name: 'api_addresses_delete', methods: ['DELETE'])]
-    public function delete(int $id, AddressRepository $repo, EntityManagerInterface $em): JsonResponse {
+    #[Route('/{addresse_id}', name: 'api_addresses_delete', methods: ['DELETE'])]
+    public function delete(
+        #[MapEntity(id:'addresse_id')] Address $address, 
+         AddressRepository $repo, 
+         EntityManagerInterface $em): JsonResponse {
+
         $user = $this->getUser();
 
-        $address = $repo->findOneBy([
-            'id' => $id,
-            'user' => $user
-        ]);
+       if ($address->getUser() !== $this->getUser()) {
+            return $this->json(['message' => 'Accès interdit.'], 403);
+        }
 
         if (!$address) {
             return $this->json(['message' => 'Adresse introuvable.'], 404);
