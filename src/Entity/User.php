@@ -23,19 +23,22 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
     private ?int $id = null;
 
     #[ORM\Column(length: 180, unique: true)]
+    #[Groups(['user:write'])]
     private string $email;
 
     #[ORM\Column]
     private string $password;
 
     #[ORM\Column(length: 100)]
-    #[Groups(['product:show'])]
+    #[Groups(['product:show', 'user:write'])]
     private string $firstName;
 
     #[ORM\Column(length: 100)]
+    #[Groups(['user:write'])]
     private string $lastName;
 
     #[ORM\Column(length: 20, nullable: true)]
+    #[Groups(['user:write'])]
     private ?string $phone = null;
 
     #[ORM\Column(type: Types::DATE_IMMUTABLE, nullable: true)]
